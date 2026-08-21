@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Element Locator",
+  "version": "1.0.0",
+  "description": "为网页元素自动生成并验证稳定、唯一的 XPath 与 CSS Selector。",
+  "permissions": ["contextMenus", "clipboardWrite"],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "devtools_page": "dist/devtools.html",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content.js"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/inspected.js"],
+      "all_frames": false,
+      "run_at": "document_idle",
+      "world": "MAIN"
+    }
+  ]
+}

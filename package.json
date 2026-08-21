@@ -1,0 +1,21 @@
+{
+  "name": "element-locator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-loader ./scripts/css-loader.mjs --import tsx --test tests/stability.test.ts tests/xpath-generator.test.ts tests/css-generator.test.ts tests/scorer.test.ts tests/validator.test.ts tests/locator.test.ts tests/shadow.test.ts tests/frame.test.ts tests/panel-format.test.ts tests/panel.test.ts tests/content.test.ts tests/inspected.test.ts tests/background.test.ts tests/build-config.test.ts"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.24.0",
+    "jsdom": "^25.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

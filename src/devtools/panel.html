@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  body { font: 13px/1.5 system-ui, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 12px; }
+  h3 { margin: 0 0 6px; }
+  .hint { color: #57606a; margin: 0 0 12px; }
+  button { padding: 6px 14px; background: #1f883d; color: #fff; border: 1px solid #1f883d; border-radius: 4px; cursor: pointer; }
+  button:hover { background: #2da44e; }
+  #status { margin-top: 10px; color: #57606a; min-height: 1.2em; word-break: break-all; }
+  #status.error { color: #c62828; }
+</style>
+</head>
+<body>
+  <h3>Element Locator</h3>
+  <p class="hint">在「元素」面板选中目标元素后，点下方按钮生成定位器（浮层会显示在页面上）。</p>
+  <button id="generate">生成定位器（$0）</button>
+  <p id="status"></p>
+  <script src="panel.js"></script>
+</body>
+</html>
