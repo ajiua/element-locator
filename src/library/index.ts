@@ -7,6 +7,10 @@ export type {
   LocatorChoice,
   LocatorResult,
   SelectorKind,
+  ShadowCandidate,
+  ShadowCandidates,
+  ShadowInfo,
+  ShadowSelectorKind,
   TargetInfo,
   ValidationResult,
 } from '../content/types';

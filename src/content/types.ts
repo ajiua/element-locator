@@ -22,6 +22,22 @@ export interface ValidationResult {
   matchesTarget: boolean;
 }
 
+export type ShadowSelectorKind =
+  | 'css'
+  | 'document-relative-xpath'
+  | 'document-absolute-xpath'
+  | 'shadow-root-relative-xpath';
+
+export interface ShadowCandidate {
+  selector: string;
+  kind: ShadowSelectorKind;
+  validation?: ValidationResult;
+}
+
+export interface ShadowCandidates {
+  xpath: ShadowCandidate | null;
+  css: ShadowCandidate | null;
+}
 export interface Candidate {
   selector: string;
   kind: SelectorKind;
@@ -61,6 +77,8 @@ export interface ShadowInfo {
   closed: boolean;
   depth: number;
   hostTag: string;
+  hostCandidates: ShadowCandidates;
+  innerCandidates: ShadowCandidates;
   hostXPath: string | null;
   hostCss: string | null;
   innerXPath: string | null;

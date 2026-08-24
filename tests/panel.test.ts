@@ -26,6 +26,8 @@ function minimalResult(partial?: Partial<LocatorResult['frame']>): LocatorResult
       inside: false,
       closed: false,
       depth: 0,
+      hostCandidates: { xpath: null, css: null },
+      innerCandidates: { xpath: null, css: null },
       hostTag: '',
       hostXPath: null,
       hostCss: null,

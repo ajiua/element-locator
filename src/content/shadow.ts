@@ -4,7 +4,7 @@
 import { isStableId, getTestId } from './stability';
 import { xpathStringLiteral } from './xpath-generator';
 import { escapeCssIdentifier, cssAttrString } from './css-generator';
-import type { ShadowInfo } from './types';
+import type { ShadowCandidates, ShadowInfo, ShadowSelectorKind } from './types';
 
 function innerXPathFrom(node: Element): string {
   const parts: string[] = [];
@@ -68,6 +68,16 @@ function simpleCss(el: Element): string | null {
   return null;
 }
 
+function toShadowCandidates(
+  xpath: string | null,
+  css: string | null,
+  xpathKind: ShadowSelectorKind,
+): ShadowCandidates {
+  return {
+    xpath: xpath ? { selector: xpath, kind: xpathKind } : null,
+    css: css ? { selector: css, kind: 'css' } : null,
+  };
+}
 export function detectShadow(el: Element): ShadowInfo {
   const info: ShadowInfo = {
     inside: false,
@@ -78,6 +88,8 @@ export function detectShadow(el: Element): ShadowInfo {
     hostCss: null,
     innerXPath: null,
     innerCss: null,
+    hostCandidates: { xpath: null, css: null },
+    innerCandidates: { xpath: null, css: null },
   };
   try {
     let node: Element | null = el;
@@ -96,9 +108,11 @@ export function detectShadow(el: Element): ShadowInfo {
       if (!info.closed) {
         info.innerXPath = innerXPathFrom(node);
         info.innerCss = innerCssFrom(node);
+        info.innerCandidates = toShadowCandidates(info.innerXPath, info.innerCss, 'shadow-root-relative-xpath');
       }
       info.hostXPath = simpleXPath(host);
       info.hostCss = simpleCss(host);
+      info.hostCandidates = toShadowCandidates(info.hostXPath, info.hostCss, 'document-relative-xpath');
       node = host;
       root = node.getRootNode();
     }
