@@ -11,6 +11,10 @@ export function createDomEvaluator(doc: Document): Evaluator {
         // jsdom 无 XPath 支持，按不可验证处理；真实浏览器可正常求值。
         return { status: 'error', count: 0, matchesTarget: false };
       }
+      const XPathResult = doc.defaultView?.XPathResult;
+      if (!XPathResult) {
+        return { status: 'error', count: 0, matchesTarget: false };
+      }
       try {
         const result = doc.evaluate(
           xpath,

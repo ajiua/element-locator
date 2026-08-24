@@ -39,6 +39,27 @@ npm run build
 
 修改源码后执行 `npm run build`，并在扩展管理页点击刷新按钮。
 
+### 本地库使用
+
+本项目同时提供可供其他项目使用的本地库产物。先构建库：
+
+```powershell
+# 在本项目根目录执行
+npm run build:library
+```
+
+业务代码唯一支持从公开入口导入：
+
+```ts
+import {
+  createDomEvaluator,
+  generateLocator,
+  type LocatorResult,
+} from 'element-locator';
+```
+
+使用方应通过本地 `file:` 依赖安装该包。不能导入 extension bundle，也不能依赖未导出的内部路径；库只提供 DOM 定位器生成能力。
+
 ## 使用方法
 
 ### 网页右键生成

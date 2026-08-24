@@ -39,6 +39,27 @@ Then install it in Chrome:
 
 After changing the source, run `npm run build` and reload the extension from the extensions page.
 
+### Local library usage
+
+This project also produces a local library for use by other projects. Build the library first:
+
+```powershell
+# Run from this project root
+npm run build:library
+```
+
+The only supported import is the public package entry:
+
+```ts
+import {
+  createDomEvaluator,
+  generateLocator,
+  type LocatorResult,
+} from 'element-locator';
+```
+
+Consumers should install this package through a local `file:` dependency. Do not import the extension bundle or depend on unexported internal paths. The library provides DOM locator generation only.
+
 ## Usage
 
 ### Generate from the page context menu

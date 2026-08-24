@@ -34,9 +34,9 @@ test('CSS: invalid selector -> error', () => {
   assert.equal(r.status, 'error');
 });
 
-test('XPath in jsdom -> error (document.evaluate unavailable), must not throw', () => {
+test('XPath uses the evaluated document realm when the host global lacks XPathResult', () => {
   const dom = new JSDOM('<body><button id="query">x</button></body>');
   const btn = dom.window.document.querySelector('button')!;
   const r = createDomEvaluator(dom.window.document).evaluateXPath('//button', btn);
-  assert.equal(r.status, 'error');
+  assert.deepEqual(r, { status: 'unique', count: 1, matchesTarget: true });
 });
