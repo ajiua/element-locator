@@ -8,7 +8,7 @@ export function createDomEvaluator(doc: Document): Evaluator {
   return {
     evaluateXPath(xpath: string, target: Element): ValidationResult {
       if (typeof doc.evaluate !== 'function') {
-        // jsdom 无 XPath 支持，按不可验证处理；真实浏览器可正常求值。
+        // 旧版 jsdom 无 XPath 支持时按不可验证处理；jsdom 25+ 与真实浏览器均可正常求值。
         return { status: 'error', count: 0, matchesTarget: false };
       }
       const XPathResult = doc.defaultView?.XPathResult;

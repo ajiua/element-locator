@@ -10,6 +10,7 @@ Element Locator is a Chrome extension that generates and validates stable, uniqu
 - Scores multiple candidates by stability and recommends the best result
 - Selects elements through either the page context menu or DevTools `$0`
 - Reports iframe information and locator details for open Shadow DOM
+- The library build exposes a per-level validated structured iframe locator path (`locatorPath`) that automation can consume directly
 - Filters transient state classes such as `hover`, `active`, and `selected`
 - Builds relative structural paths from stable ancestors when the target has no stable attribute
 - Offers a structural mode that avoids volatile text
@@ -54,11 +55,40 @@ The only supported import is the public package entry:
 import {
   createDomEvaluator,
   generateLocator,
+  type FrameInfo,
+  type FrameLimitation,
+  type FramePathSegment,
+  type FrameSelectorCandidate,
+  type FrameSelectorKind,
   type LocatorResult,
 } from 'element-locator';
 ```
 
 Consumers should install this package through a local `file:` dependency. Do not import the extension bundle or depend on unexported internal paths. The library provides DOM locator generation only.
+
+#### Structured iframe locator path
+
+When the target element lives inside an iframe, `result.frame.locatorPath` describes a structured, level-by-level path to that iframe:
+
+```ts
+const result = generateLocator(element, createDomEvaluator(document), window);
+
+for (const segment of result.frame.locatorPath) {
+  console.log(segment.preferred.kind, segment.preferred.selector);
+}
+
+if (result.frame.limitation) {
+  console.warn(result.frame.limitation);
+}
+```
+
+Semantics:
+
+- `locatorPath` is ordered **outermost to innermost** (root to leaf).
+- Each level contains only verified candidates that **uniquely match that level's iframe**.
+- `preferred` is the **highest-scoring verified candidate at that level; ties break in favor of CSS over XPath**. For an iframe with a stable `id`, preferred is therefore usually the XPath form `"//iframe[@id='…']"` (105 points, including the tag-exact bonus) rather than the CSS `#…` selector (100 points); do not assume preferred is always CSS.
+- If any level yields no uniquely matching candidate, or a cross-origin frame prevents access to an ancestor frameElement, **no partial path is returned**: `locatorPath` is an empty array and `limitation` is set.
+- `path` is a human-readable hint; automation should consume `locatorPath`.
 
 ## Usage
 
@@ -147,7 +177,9 @@ Automated tests cover candidate generation, CSS validation, scoring, iframe rout
 ## Known limitations
 
 - A closed Shadow DOM cannot be traversed externally; the extension only reports the limitation.
-- Cross-origin iframes prevent access to complete frame element information from the parent page.
+- Cross-origin iframes prevent access to complete frame element information from the parent page; the structured path is unavailable and `frame.limitation` is `'cross-origin'`.
+- If an iframe is accessible but any level produces no uniquely matching candidate, `frame.limitation` is `'unlocatable'`. In both restricted cases an incomplete `locatorPath` is never returned (`locatorPath` is an empty array).
+- Structured path candidates come in exactly two kinds, `css` and `xpath`: absolute XPath paths are excluded, while CSS candidates may contain structural chains starting from the html root (for example `html > body:nth-child(2) > iframe:nth-child(1)`); this is intentional.
 - Pure positional paths are affected by DOM insertion, removal, and reordering.
 - Full XPath behavior must be verified in a real browser because jsdom cannot reproduce every browser implementation detail.
 

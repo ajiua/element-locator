@@ -65,11 +65,41 @@ export interface TargetInfo {
   classes: string[];
 }
 
+// iframe 定位选择器的种类：CSS 选择器或 XPath。
+export type FrameSelectorKind = 'css' | 'xpath';
+
+// 单个 iframe 定位候选：含种类、选择器文本、评分与校验结果。
+export interface FrameSelectorCandidate {
+  kind: FrameSelectorKind;
+  selector: string;
+  score: number;
+  validation: ValidationResult;
+}
+
+/**
+ * 一级 iframe 路径段：preferred 为推荐候选，candidates 为按分数排序的完整候选列表。
+ *
+ * 运行时不变式：
+ * - `candidates` 非空；
+ * - `preferred` 即排序后的 `candidates[0]`（preferred ∈ candidates）。
+ */
+export interface FramePathSegment {
+  preferred: FrameSelectorCandidate;
+  candidates: FrameSelectorCandidate[];
+}
+
+// 无法生成结构化 iframe 路径时的受限原因。
+export type FrameLimitation = 'cross-origin' | 'unlocatable';
+
 export interface FrameInfo {
   inFrame: boolean;
   path: string;
   url: string;
   sameOrigin: boolean;
+  /** 从最外层到最内层逐级描述目标元素所在 iframe 的结构化定位路径。 */
+  locatorPath: FramePathSegment[];
+  /** 存在时表示无法给出完整结构化路径的原因（如跨域）。 */
+  limitation?: FrameLimitation;
 }
 
 export interface ShadowInfo {

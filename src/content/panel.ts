@@ -3,7 +3,7 @@
 
 import cssText from '../styles/panel.css';
 import { esc, starsFor, statusText } from './panel-format';
-import type { AncestorItem, Candidate, LocatorResult, PanelPicker } from './types';
+import type { AncestorItem, Candidate, FrameInfo, LocatorResult, PanelPicker } from './types';
 
 let host: HTMLElement | null = null;
 let shadow: ShadowRoot | null = null;
@@ -32,6 +32,20 @@ function crumbsHtml(picker: PanelPicker): string {
         `<button type="button" class="crumb${a.selected ? ' on' : ''}" data-crumb="${i}" title="${esc(crumbLabel(a))}">${esc(crumbLabel(a))}</button>`,
     )
     .join('<span class="crumb-sep">&gt;</span>')}</div>`;
+}
+
+// frame 受限提示：以 limitation 为准绳精确区分跨域与"可访问但无唯一候选"；
+// 同源且无受限时保持既有展示，全部插值文本经 esc() 转义。
+function frameNoteHtml(frame: FrameInfo): string {
+  if (!frame.inFrame) return '';
+  const urlPart = frame.url ? ` (<code>${esc(frame.url)}</code>)` : '';
+  if (frame.limitation === 'unlocatable') {
+    return `<div class="note warn">iframe 可访问，但没有唯一且命中目标的定位器</div>`;
+  }
+  if (frame.limitation === 'cross-origin' || !frame.sameOrigin) {
+    return `<div class="note warn">跨域 iframe，无法生成完整定位路径${urlPart} — 请先切换到对应 frame</div>`;
+  }
+  return `<div class="note warn">Frame: <code>${esc(frame.path)}</code> — 需先进入该 iframe 再使用定位器${urlPart}</div>`;
 }
 
 function ensureHost(): void {
@@ -64,11 +78,7 @@ export function showPanel(result: LocatorResult, picker?: PanelPicker): void {
     return javaState.on ? escapeForJava(s) : s;
   }
 
-  const frameHtml = result.frame.inFrame
-    ? result.frame.sameOrigin
-      ? `<div class="note warn">Frame: <code>${esc(result.frame.path)}</code> — 需先进入该 iframe 再使用定位器${result.frame.url ? ` (<code>${esc(result.frame.url)}</code>)` : ''}</div>`
-      : `<div class="note warn">跨域 iframe: <code>${esc(result.frame.url)}</code> — 请先切换到对应 frame</div>`
-    : '';
+  const frameHtml = frameNoteHtml(result.frame);
   const shadowHtml = result.shadow.inside
     ? `<div class="note warn">Target is inside Shadow DOM${result.shadow.closed ? ' (closed)' : ''}</div>`
     : '';

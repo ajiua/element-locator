@@ -4,7 +4,12 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { createDomEvaluator, generateLocator } from '../src/library/index';
-import type { Evaluator, ShadowSelectorKind } from '../src/library/index';
+import type {
+  Evaluator,
+  FrameInfo,
+  FramePathSegment,
+  ShadowSelectorKind,
+} from '../src/library/index';
 
 test('package 声明稳定的库入口边界', () => {
   const packageJson = JSON.parse(
@@ -57,6 +62,20 @@ test('公开入口可为唯一 id 按钮生成 CSS 与 XPath 候选', () => {
   assert.equal(result.css.best?.validation?.matchesTarget, true);
   assert.equal(result.xpath.best?.selector, "//button[@id='save']");
   assert.equal(result.xpath.best?.validation?.matchesTarget, true);
+});
+
+test('公开入口暴露 Frame 类型且顶层元素的结构化路径为空', () => {
+  const dom = new JSDOM('<body><button id="save">保存</button></body>');
+  const button = dom.window.document.querySelector('button')!;
+  const result = generateLocator(
+    button,
+    createDomEvaluator(dom.window.document),
+    dom.window as unknown as Window,
+  );
+
+  const frame: FrameInfo = result.frame;
+  const path: FramePathSegment[] = frame.locatorPath;
+  assert.deepEqual(path, []);
 });
 
 test('公开入口为 open Shadow DOM 的 host 与内部路径提供已验证候选', () => {

@@ -40,6 +40,40 @@ test('完整构建保留扩展与库的全部消费产物', async () => {
   for (const output of outputs) {
     assert.equal(existsSync(output), true, `${output} should exist after npm run build`);
   }
+
+  // 公共契约（一）：结构化 iframe 路径的五个 Frame 类型必须从库入口 re-export。
+  // 行尾统一归一化为 LF：git autocrlf 可能让源文件以 CRLF 落盘并传导到 tsc 声明产物，
+  // 避免带行尾锚定的断言因此假性失败。
+  const entryDeclaration = readFileSync('dist/library/index.d.ts', 'utf8').replace(/\r\n/g, '\n');
+  const frameContractTypes = [
+    'FrameInfo',
+    'FrameLimitation',
+    'FramePathSegment',
+    'FrameSelectorCandidate',
+    'FrameSelectorKind',
+  ];
+  for (const typeName of frameContractTypes) {
+    assert.match(
+      entryDeclaration,
+      new RegExp(`\\b${typeName}\\b`),
+      `index.d.ts must re-export ${typeName}`,
+    );
+  }
+
+  // 公共契约（二）：声明正文由 tsc 按模块生成在 content/types.d.ts，
+  // 断言与真实产物文本格式一致，锁住结构化 iframe 路径的公开形状。
+  const typesDeclaration = readFileSync('dist/library/content/types.d.ts', 'utf8').replace(/\r\n/g, '\n');
+  const contractPatterns = [
+    /^export interface FrameSelectorCandidate \{/m,
+    /^export interface FramePathSegment \{/m,
+    /\blocatorPath: FramePathSegment\[\];/,
+    /\blimitation\?: FrameLimitation;/,
+    /^export type FrameLimitation = 'cross-origin' \| 'unlocatable';$/m,
+    /^export type FrameSelectorKind = 'css' \| 'xpath';$/m,
+  ];
+  for (const pattern of contractPatterns) {
+    assert.match(typesDeclaration, pattern, `library declarations must contain ${pattern}`);
+  }
 });
 
 test('默认测试命令覆盖全部 library 回归测试', () => {

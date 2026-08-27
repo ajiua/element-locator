@@ -162,3 +162,15 @@ test('unique text also gets a stable ancestor-scoped XPath candidate', () => {
   assert.equal(scoped.validation?.status, 'unique');
   assert.equal(result.xpath.best?.selector, scoped.selector);
 });
+
+test('generateLocator exposes structured frame.locatorPath without signature changes', () => {
+  // 无需修改 generateLocator() 签名：结构化 iframe 路径通过
+  // result.frame.locatorPath 自动携带；顶层 DOM 场景下为空数组且无受限原因。
+  const dom = makeDom('<button id="save">保存</button>');
+  const btn = dom.window.document.querySelector('button')!;
+  const result = generateLocator(btn, mockEvaluator(dom, btn, [], []), dom.window as unknown as Window);
+
+  assert.equal(result.frame.inFrame, false);
+  assert.deepEqual(result.frame.locatorPath, []);
+  assert.equal(result.frame.limitation, undefined);
+});

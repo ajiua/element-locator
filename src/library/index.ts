@@ -3,6 +3,11 @@ export { createDomEvaluator } from '../content/validator';
 export type {
   Candidate,
   Evaluator,
+  FrameInfo,
+  FrameLimitation,
+  FramePathSegment,
+  FrameSelectorCandidate,
+  FrameSelectorKind,
   GenerateOptions,
   LocatorChoice,
   LocatorResult,

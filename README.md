@@ -10,6 +10,7 @@ Element Locator 是一款 Chrome 扩展，用于为网页元素生成并验证�
 - 根据稳定性为多个候选定位器评分并推荐最优结果
 - 支持网页右键和 DevTools `$0` 两种选取方式
 - 支持 iframe 信息识别和 open Shadow DOM 定位信息
+- 库产物提供逐级验证的结构化 iframe 定位路径（`locatorPath`），自动化流程可直接消费
 - 自动过滤 `hover`、`active`、`selected` 等临时状态 class
 - 目标缺少稳定属性时，可使用稳定祖先生成相对层级路径
 - 提供纯结构定位模式，避免依赖容易变化的文本
@@ -54,11 +55,40 @@ npm run build:library
 import {
   createDomEvaluator,
   generateLocator,
+  type FrameInfo,
+  type FrameLimitation,
+  type FramePathSegment,
+  type FrameSelectorCandidate,
+  type FrameSelectorKind,
   type LocatorResult,
 } from 'element-locator';
 ```
 
 使用方应通过本地 `file:` 依赖安装该包。不能导入 extension bundle，也不能依赖未导出的内部路径；库只提供 DOM 定位器生成能力。
+
+#### 结构化 iframe 定位路径
+
+当目标元素位于 iframe 中时，`result.frame.locatorPath` 会给出逐级定位 iframe 的结构化路径：
+
+```ts
+const result = generateLocator(element, createDomEvaluator(document), window);
+
+for (const segment of result.frame.locatorPath) {
+  console.log(segment.preferred.kind, segment.preferred.selector);
+}
+
+if (result.frame.limitation) {
+  console.warn(result.frame.limitation);
+}
+```
+
+语义约定：
+
+- `locatorPath` 按**最外层到最内层**排序（根到叶）。
+- 每一级只包含**唯一且命中该级 iframe** 的已验证候选。
+- `preferred` 是该级**分数最高的已验证候选，同分时 CSS 排在 XPath 前**。因此带稳定 `id` 的 iframe，其 preferred 通常是 XPath 形式 `"//iframe[@id='…']"`（105 分，含 tagExact 加成），而不是 CSS `#…`（100 分）；不要假设 preferred 总是 CSS。
+- 任一级产不出唯一命中的候选、或因跨域无法访问祖先 frameElement 时，**不会输出半条路径**：此时 `locatorPath` 为空数组并设置 `limitation`。
+- `path` 是人类可读提示；自动化流程应消费 `locatorPath`。
 
 ## 使用方法
 
@@ -147,7 +177,9 @@ dist/            # 构建产物，不提交到仓库
 ## 已知限制
 
 - closed Shadow DOM 无法从外部穿透，扩展只提供受限提示。
-- 跨域 iframe 无法读取父页面中的完整 frame 元素信息，只能提供可访问的信息。
+- 跨域 iframe 无法读取父页面中的完整 frame 元素信息，只能提供可访问的信息；此时结构化路径不可用，`frame.limitation` 为 `'cross-origin'`。
+- iframe 可访问但任一级产不出唯一命中的候选时，`frame.limitation` 为 `'unlocatable'`。两种受限情况都不会返回不完整的 `locatorPath`（此时 `locatorPath` 为空数组）。
+- 结构化路径段的候选只有 `css` 与 `xpath` 两种：XPath 侧排除了绝对路径，CSS 侧可能包含从 html 根出发的结构链（如 `html > body:nth-child(2) > iframe:nth-child(1)`），这是有意行为。
 - 纯位置路径会受 DOM 插入、删除和排序影响。
 - XPath 的完整行为需要在真实浏览器中验证；jsdom 测试环境无法等价覆盖所有浏览器实现。
 

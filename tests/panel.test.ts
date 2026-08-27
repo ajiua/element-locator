@@ -21,7 +21,7 @@ function minimalResult(partial?: Partial<LocatorResult['frame']>): LocatorResult
   const cssBest = uniqueCandidate('#q', 'id: q');
   return {
     target: { tag: 'button', text: '查询 >> "<script>x</script>', id: 'q', classes: [] },
-    frame: { inFrame: false, path: '', url: '', sameOrigin: true, ...partial },
+    frame: { inFrame: false, path: '', url: '', sameOrigin: true, locatorPath: [], ...partial },
     shadow: {
       inside: false,
       closed: false,
@@ -96,9 +96,90 @@ test('showPanel renders cross-origin frame note with url', () => {
 
   const shadow = dom.window.document.querySelector('#element-locator-host')!.shadowRoot!;
   const html = shadow.innerHTML;
-  assert.match(html, /跨域 iframe/);
+  assert.match(html, /跨域 iframe，无法生成完整定位路径/);
   assert.match(html, /https:\/\/docs\.example\.com\/x/);
   assert.match(html, /请先切换到对应 frame/);
+  // 跨域受限不得走普通"进入 iframe"展示分支
+  assert.ok(!html.includes('需先进入该 iframe'), 'cross-origin 不应显示普通进入 iframe 提示');
+
+  hidePanel();
+  restoreClipboard?.();
+});
+
+test('showPanel renders unlocatable frame note without path hint', () => {
+  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+  (globalThis as unknown as { document: Document }).document = dom.window.document;
+  stubClipboard();
+
+  hidePanel();
+  showPanel(minimalResult({
+    inFrame: true,
+    sameOrigin: true,
+    path: 'iframe[name=pay]',
+    url: 'https://app.example.com/pay',
+    locatorPath: [],
+    limitation: 'unlocatable',
+  }));
+
+  const shadow = dom.window.document.querySelector('#element-locator-host')!.shadowRoot!;
+  const html = shadow.innerHTML;
+  assert.match(html, /iframe 可访问，但没有唯一且命中目标的定位器/);
+  // 同源但带 limitation 时不得误走普通展示分支：path 不作为可执行提示出现
+  assert.ok(!html.includes('需先进入该 iframe'), 'unlocatable 不应显示普通进入 iframe 提示');
+  assert.ok(!html.includes('iframe[name=pay]'), 'unlocatable 不应把展示用 path 当可执行提示');
+
+  hidePanel();
+  restoreClipboard?.();
+});
+
+test('showPanel renders cross-origin note even when sameOrigin flag is true', () => {
+  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+  (globalThis as unknown as { document: Document }).document = dom.window.document;
+  stubClipboard();
+
+  hidePanel();
+  // sameOrigin: true + limitation: 'cross-origin'：专门命中 limitation 字面量比较，
+  // 与既有 sameOrigin:false 用例（防御性回退）互补。
+  showPanel(minimalResult({
+    inFrame: true,
+    sameOrigin: true,
+    path: 'iframe[name=docs]',
+    url: 'https://docs.example.com/x',
+    locatorPath: [],
+    limitation: 'cross-origin',
+  }));
+
+  const shadow = dom.window.document.querySelector('#element-locator-host')!.shadowRoot!;
+  const notes = [...shadow.querySelectorAll<HTMLDivElement>('div.note.warn')].map((n) => n.outerHTML);
+  // 完整形态锁定："文案 (url) — 指引" 的连接格式；deepEqual 同时保证不含 path 误展示。
+  assert.deepEqual(notes, [
+    '<div class="note warn">跨域 iframe，无法生成完整定位路径 (<code>https://docs.example.com/x</code>) — 请先切换到对应 frame</div>',
+  ]);
+
+  hidePanel();
+  restoreClipboard?.();
+});
+
+test('showPanel keeps the plain same-origin frame note byte-for-byte stable', () => {
+  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+  (globalThis as unknown as { document: Document }).document = dom.window.document;
+  stubClipboard();
+
+  hidePanel();
+  showPanel(minimalResult({
+    inFrame: true,
+    sameOrigin: true,
+    path: 'iframe[name=app]',
+    url: 'https://app.example.com/pay',
+    locatorPath: [],
+  }));
+
+  const shadow = dom.window.document.querySelector('#element-locator-host')!.shadowRoot!;
+  const notes = [...shadow.querySelectorAll<HTMLDivElement>('div.note.warn')].map((n) => n.outerHTML);
+  // 兼容约束：同源无受限时的展示模板必须逐字节稳定（扩展面板消费方依赖此格式）。
+  assert.deepEqual(notes, [
+    '<div class="note warn">Frame: <code>iframe[name=app]</code> — 需先进入该 iframe 再使用定位器 (<code>https://app.example.com/pay</code>)</div>',
+  ]);
 
   hidePanel();
   restoreClipboard?.();

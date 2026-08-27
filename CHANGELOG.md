@@ -2,6 +2,18 @@
 
 本文件记录 Element Locator 的主要版本变化。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [未发布]
+
+### 变更
+
+- **破坏性（仅影响手工构造者）：** `FrameInfo.locatorPath` 现为必填字段。经 `generateLocator()` 消费的调用方不受影响；手工构造 `FrameInfo` 字面量的代码需补 `locatorPath: []`。
+
+### 新增
+
+- 库入口提供结构化且逐级验证通过的 iframe 定位路径：`FrameInfo.locatorPath` 按根到叶（最外层到最内层）顺序描述每一级 iframe，每级仅保留唯一命中目标的候选；原有人类可读的 `FrameInfo.path` 字段保持不变，自动化消费建议使用 `locatorPath`。
+- 公开五个 Frame 相关类型：`FrameInfo`、`FrameLimitation`、`FramePathSegment`、`FrameSelectorCandidate`、`FrameSelectorKind`。
+- 无法给出完整结构化路径时，通过 `FrameInfo.limitation` 明确标注原因：`'cross-origin'`（跨域无法访问祖先 frameElement）或 `'unlocatable'`（iframe 可访问但任一级产不出唯一命中的候选）；两种情况均不会返回不完整的 `locatorPath`。
+
 ## [1.0.0] - 2026-08-21
 
 ### 新增
