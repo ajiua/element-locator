@@ -47,6 +47,7 @@ const libraryEntry = {
 
 // 需要原样拷到 dist/ 的静态 HTML（devtools_page / 面板）。
 const statics = [
+  ['manifest.json', 'dist/manifest.json'],
   ['src/devtools/devtools.html', 'dist/devtools.html'],
   ['src/devtools/panel.html', 'dist/panel.html'],
 ];

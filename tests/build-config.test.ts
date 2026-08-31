@@ -25,7 +25,20 @@ async function run(command: string, args: string[]) {
 
 test('DevTools panel page is relative to the extension root', async () => {
   const source = await readFile('src/devtools/devtools.ts', 'utf8');
-  assert.match(source, /panels\.create\([^\n]+['"]dist\/panel\.html['"]/);
+  assert.match(source, /panels\.create\([^\n]+['"]panel\.html['"]/);
+});
+
+test('extension manifest is emitted into dist with dist-relative entry paths', async () => {
+  const extensionBuild = await run(npmCommand, ['run', 'build:extension']);
+  assert.equal(extensionBuild.code, 0, extensionBuild.output);
+
+  const manifest = JSON.parse(await readFile('dist/manifest.json', 'utf8'));
+  assert.equal(manifest.background.service_worker, 'background.js');
+  assert.equal(manifest.devtools_page, 'devtools.html');
+  assert.deepEqual(
+    manifest.content_scripts.map(({ js }: { js: string[] }) => js),
+    [['content.js'], ['inspected.js']],
+  );
 });
 
 test('build emits an ESM library entry and its type declarations', async () => {
@@ -56,6 +69,7 @@ test('build commands separate extension, library, and extension watch outputs', 
 
   const extensionBuild = await run(npmCommand, ['run', 'build:extension']);
   assert.equal(extensionBuild.code, 0, extensionBuild.output);
+  assert.equal(existsSync('dist/manifest.json'), true);
   assert.equal(existsSync('dist/content.js'), true);
   assert.equal(existsSync('dist/library/index.js'), false);
 
@@ -139,6 +153,7 @@ test('watch mode completes an initial build and stays active', async () => {
       const timeout = setTimeout(() => reject(new Error(`watch startup timed out:\n${output}`)), 8_000);
       const poll = setInterval(() => {
         const outputs = [
+          'dist/manifest.json',
           'dist/background.js',
           'dist/content.js',
           'dist/devtools.html',

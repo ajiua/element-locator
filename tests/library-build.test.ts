@@ -26,6 +26,7 @@ test('完整构建保留扩展与库的全部消费产物', async () => {
   assert.equal(build.code, 0, build.output);
 
   const outputs = [
+    'dist/manifest.json',
     'dist/content.js',
     'dist/background.js',
     'dist/devtools.js',

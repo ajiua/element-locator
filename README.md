@@ -36,7 +36,7 @@ npm run build
 1. 打开 `chrome://extensions`。
 2. 开启右上角的“开发者模式”。
 3. 点击“加载已解压的扩展程序”。
-4. 选择本项目根目录，而不是 `dist` 目录。
+4. 选择本项目的 `dist` 目录。
 
 修改源码后执行 `npm run build`，并在扩展管理页点击刷新按钮。
 
@@ -144,7 +144,7 @@ Element Locator 会组合元素自身属性、文本、稳定祖先和 DOM 结�
 
 | 命令 | 说明 |
 | --- | --- |
-| `npm run build` | 构建扩展到 `dist/` |
+| `npm run build` | 构建可从 `dist/` 加载的扩展，并生成 `dist/library/` 库产物 |
 | `npm run watch` | 首次构建后持续监听源码变化 |
 | `npm run typecheck` | 执行 TypeScript 类型检查 |
 | `npm test` | 运行自动化测试 |
@@ -159,7 +159,7 @@ src/
 └─ inspected/    # DevTools $0 页面注入入口
 tests/           # node:test + jsdom 自动化测试
 scripts/         # esbuild 构建脚本
-dist/            # 构建产物，不提交到仓库
+dist/            # 完整扩展产物；library/ 子目录供其他项目使用
 ```
 
 ## 浏览器验证建议

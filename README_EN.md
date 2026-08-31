@@ -36,7 +36,7 @@ Then install it in Chrome:
 1. Open `chrome://extensions`.
 2. Enable **Developer mode**.
 3. Click **Load unpacked**.
-4. Select the project root directory, not the `dist` directory.
+4. Select the project's `dist` directory.
 
 After changing the source, run `npm run build` and reload the extension from the extensions page.
 
@@ -144,7 +144,7 @@ These paths do not depend on pointer state, but they may change when list items 
 
 | Command | Description |
 | --- | --- |
-| `npm run build` | Build the extension into `dist/` |
+| `npm run build` | Build the loadable extension into `dist/` and the library into `dist/library/` |
 | `npm run watch` | Build once and watch source files for changes |
 | `npm run typecheck` | Run TypeScript type checking |
 | `npm test` | Run the automated test suite |
@@ -159,7 +159,7 @@ src/
 └─ inspected/    # DevTools $0 page injection entry
 tests/           # node:test and jsdom tests
 scripts/         # esbuild build scripts
-dist/            # Generated output; not committed
+dist/            # Complete extension output; library/ is consumed by other projects
 ```
 
 ## Browser verification checklist
